@@ -1,0 +1,39 @@
+
+services:
+  # FastAPI backend
+  - type: web
+    name: aquatech-catalogue-api
+    runtime: python
+    region: singapore
+    plan: free
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /docs
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: aquatech-catalogue-db
+          property: connectionString
+      - key: PYTHON_VERSION
+        value: "3.12"
+      - key: FRONTEND_URL
+        sync: false
+
+  # Angular frontend
+  - type: web
+    name: aquatech-catalogue-frontend
+    runtime: static
+    buildCommand: cd frontend && npm ci && npm run build
+    staticPublishPath: ./frontend/dist/aquatech-catalogue-frontend/browser
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+
+databases:
+  - name: aquatech-catalogue-db
+    databaseName: aquatech_catalogue
+    user: aquatech_user
+    region: singapore
+    plan: free
